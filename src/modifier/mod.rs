@@ -71,7 +71,7 @@ pub enum ModifierContext {
 }
 
 /// Trait describing a modifier customizing an effect pipeline.
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 pub trait Modifier: Reflect + Send + Sync + 'static {
     /// Get the context this modifier applies to.
     fn context(&self) -> ModifierContext;

@@ -4,8 +4,10 @@ use bevy::{
     prelude::*,
     utils::{FloatOrd, HashMap},
 };
-use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 use crate::{
     calc_func_id, Attribute, BoxedModifier, Gradient, Modifier, ModifierContext, ShaderCode,
@@ -68,7 +70,7 @@ impl RenderContext {
 }
 
 /// Trait to customize the rendering of alive particles each frame.
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 pub trait RenderModifier: Modifier {
     /// Apply the rendering code.
     fn apply(&self, context: &mut RenderContext);
@@ -77,7 +79,7 @@ pub trait RenderModifier: Modifier {
 /// Macro to implement the [`Modifier`] trait for a render modifier.
 macro_rules! impl_mod_render {
     ($t:ty, $attrs:expr) => {
-        #[typetag::serde]
+        #[cfg_attr(feature = "serde", typetag::serde)]
         impl Modifier for $t {
             fn context(&self) -> ModifierContext {
                 ModifierContext::Render
@@ -107,10 +109,11 @@ macro_rules! impl_mod_render {
 /// # Attributes
 ///
 /// This modifier does not require any specific particle attribute.
-#[derive(Default, Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ParticleTextureModifier {
     /// The texture image to modulate the particle color with.
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     // TODO - Clarify if Modifier needs to be serializable, or we need another on-disk
     // representation... NOTE - Need to keep a strong handle here, nothing else will keep that
     // texture loaded currently.
@@ -119,7 +122,7 @@ pub struct ParticleTextureModifier {
 
 impl_mod_render!(ParticleTextureModifier, &[]); // TODO - should require some UV maybe?
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for ParticleTextureModifier {
     fn apply(&self, context: &mut RenderContext) {
         context.set_particle_texture(self.texture.clone());
@@ -135,7 +138,8 @@ impl RenderModifier for ParticleTextureModifier {
 /// # Attributes
 ///
 /// This modifier does not require any specific particle attribute.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SetColorModifier {
     /// The particle color.
     pub color: Value<Vec4>,
@@ -170,7 +174,7 @@ impl Hash for SetColorModifier {
 
 impl_mod_render!(SetColorModifier, &[]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for SetColorModifier {
     fn apply(&self, context: &mut RenderContext) {
         context.vertex_code += &format!("color = {0};\n", self.color.to_wgsl_string());
@@ -185,7 +189,8 @@ impl RenderModifier for SetColorModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::AGE`]
 /// - [`Attribute::LIFETIME`]
-#[derive(Debug, Default, Clone, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Hash, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ColorOverLifetimeModifier {
     /// The color gradient defining the particle color based on its lifetime.
     pub gradient: Gradient<Vec4>,
@@ -196,7 +201,7 @@ impl_mod_render!(
     &[Attribute::AGE, Attribute::LIFETIME]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for ColorOverLifetimeModifier {
     fn apply(&self, context: &mut RenderContext) {
         let func_name = context.add_color_gradient(self.gradient.clone());
@@ -228,7 +233,8 @@ impl RenderModifier for ColorOverLifetimeModifier {
 /// # Attributes
 ///
 /// This modifier does not require any specific particle attribute.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SetSizeModifier {
     /// The particle color.
     pub size: Value<Vec2>,
@@ -262,7 +268,7 @@ impl Hash for SetSizeModifier {
 
 impl_mod_render!(SetSizeModifier, &[]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for SetSizeModifier {
     fn apply(&self, context: &mut RenderContext) {
         context.vertex_code += &format!("size = {0};\n", self.size.to_wgsl_string());
@@ -278,7 +284,8 @@ impl RenderModifier for SetSizeModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::AGE`]
 /// - [`Attribute::LIFETIME`]
-#[derive(Debug, Default, Clone, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Hash, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SizeOverLifetimeModifier {
     /// The size gradient defining the particle size based on its lifetime.
     pub gradient: Gradient<Vec2>,
@@ -293,7 +300,7 @@ impl_mod_render!(
     &[Attribute::AGE, Attribute::LIFETIME]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for SizeOverLifetimeModifier {
     fn apply(&self, context: &mut RenderContext) {
         let func_name = context.add_size_gradient(self.gradient.clone());
@@ -323,12 +330,13 @@ impl RenderModifier for SizeOverLifetimeModifier {
 /// # Attributes
 ///
 /// This modifier does not require any specific particle attribute.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Hash, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BillboardModifier;
 
 impl_mod_render!(BillboardModifier, &[]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for BillboardModifier {
     fn apply(&self, context: &mut RenderContext) {
         context.vertex_code += "axis_x = view.view[0].xyz;\naxis_y = view.view[1].xyz;\n";
@@ -342,7 +350,8 @@ impl RenderModifier for BillboardModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Hash, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct OrientAlongVelocityModifier;
 
 impl_mod_render!(
@@ -350,7 +359,7 @@ impl_mod_render!(
     &[Attribute::POSITION, Attribute::VELOCITY]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl RenderModifier for OrientAlongVelocityModifier {
     fn apply(&self, context: &mut RenderContext) {
         context.vertex_code += r#"let dir = normalize(particle.position - view.view[3].xyz);

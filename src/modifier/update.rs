@@ -68,7 +68,7 @@ impl<'a> EvalContext for UpdateContext<'a> {
 }
 
 /// Trait to customize the updating of existing particles each frame.
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 pub trait UpdateModifier: Modifier {
     /// Append the update code.
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError>;
@@ -77,7 +77,7 @@ pub trait UpdateModifier: Modifier {
 /// Macro to implement the [`Modifier`] trait for an update modifier.
 macro_rules! impl_mod_update {
     ($t:ty, $attrs:expr) => {
-        #[typetag::serde]
+        #[cfg_attr(feature = "serde", typetag::serde)]
         impl Modifier for $t {
             fn context(&self) -> ModifierContext {
                 ModifierContext::Update
@@ -151,7 +151,8 @@ impl ToWgslString for ValueOrProperty {
 ///
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Clone, Copy, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AccelModifier {
     /// The acceleration to apply to all particles in the effect each frame.
     accel: ExprHandle,
@@ -178,7 +179,7 @@ impl AccelModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl Modifier for AccelModifier {
     fn context(&self) -> ModifierContext {
         ModifierContext::Update
@@ -214,7 +215,7 @@ impl Modifier for AccelModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl UpdateModifier for AccelModifier {
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError> {
         let attr = context.module.attr(Attribute::VELOCITY);
@@ -246,7 +247,8 @@ impl UpdateModifier for AccelModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Clone, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RadialAccelModifier {
     /// The acceleration to apply to all particles in the effect each frame.
     accel: ValueOrProperty,
@@ -290,7 +292,7 @@ impl RadialAccelModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl Modifier for RadialAccelModifier {
     fn context(&self) -> ModifierContext {
         ModifierContext::Update
@@ -324,7 +326,7 @@ impl Modifier for RadialAccelModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl UpdateModifier for RadialAccelModifier {
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError> {
         let func_id = calc_func_id(self);
@@ -369,7 +371,8 @@ impl UpdateModifier for RadialAccelModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Clone, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TangentAccelModifier {
     /// The acceleration to apply to all particles in the effect each frame.
     accel: ValueOrProperty,
@@ -423,7 +426,7 @@ impl TangentAccelModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl Modifier for TangentAccelModifier {
     fn context(&self) -> ModifierContext {
         ModifierContext::Update
@@ -457,7 +460,7 @@ impl Modifier for TangentAccelModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl UpdateModifier for TangentAccelModifier {
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError> {
         let func_id = calc_func_id(self);
@@ -573,7 +576,8 @@ impl ForceFieldSource {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Hash, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Hash, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ForceFieldModifier {
     /// Array of force field sources.
     ///
@@ -631,7 +635,7 @@ impl_mod_update!(
     &[Attribute::POSITION, Attribute::VELOCITY]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl UpdateModifier for ForceFieldModifier {
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError> {
         let func_id = calc_func_id(self);
@@ -662,7 +666,8 @@ impl UpdateModifier for ForceFieldModifier {
 ///
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Clone, Copy, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LinearDragModifier {
     /// Drag coefficient. Higher values increase the drag force, and
     /// consequently decrease the particle's speed faster.
@@ -685,7 +690,7 @@ impl LinearDragModifier {
 
 impl_mod_update!(LinearDragModifier, &[Attribute::VELOCITY]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl UpdateModifier for LinearDragModifier {
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError> {
         let m = &mut context.module;
@@ -712,7 +717,8 @@ impl UpdateModifier for LinearDragModifier {
 ///
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
-#[derive(Debug, Clone, Copy, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AabbKillModifier {
     /// Center of the AABB.
     pub center: ExprHandle,
@@ -745,7 +751,7 @@ impl AabbKillModifier {
 
 impl_mod_update!(AabbKillModifier, &[Attribute::POSITION]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl UpdateModifier for AabbKillModifier {
     fn apply(&self, context: &mut UpdateContext) -> Result<(), ExprError> {
         let pos = context.module.attr(Attribute::POSITION);

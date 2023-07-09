@@ -1,6 +1,8 @@
 //! Modifiers to initialize particles when they spawn.
 
 use bevy::prelude::*;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -60,7 +62,7 @@ impl<'a> EvalContext for InitContext<'a> {
 }
 
 /// Trait to customize the initializing of newly spawned particles.
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 pub trait InitModifier: Modifier {
     /// Append the initializing code.
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError>;
@@ -69,7 +71,7 @@ pub trait InitModifier: Modifier {
 /// Macro to implement the [`Modifier`] trait for an init modifier.
 macro_rules! impl_mod_init {
     ($t:ty, $attrs:expr) => {
-        #[typetag::serde]
+        #[cfg_attr(feature = "serde", typetag::serde)]
         impl Modifier for $t {
             fn context(&self) -> ModifierContext {
                 ModifierContext::Init
@@ -113,7 +115,8 @@ macro_rules! impl_mod_init {
 /// # Attributes
 ///
 /// This modifier requires the attribute specified in the `attribute` field.
-#[derive(Debug, Clone, Copy, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitAttributeModifier {
     /// The name of the attribute to initialize.
     pub attribute: Attribute,
@@ -128,7 +131,7 @@ impl InitAttributeModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl Modifier for InitAttributeModifier {
     fn context(&self) -> ModifierContext {
         ModifierContext::Init
@@ -151,7 +154,7 @@ impl Modifier for InitAttributeModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitAttributeModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         assert!(context.module.get(self.value).is_some());
@@ -169,7 +172,8 @@ impl InitModifier for InitAttributeModifier {
 ///
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
-#[derive(Debug, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitPositionCircleModifier {
     /// The circle center, relative to the emitter position.
     pub center: Vec3,
@@ -195,7 +199,7 @@ impl Default for InitPositionCircleModifier {
 
 impl_mod_init!(InitPositionCircleModifier, &[Attribute::POSITION]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitPositionCircleModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         let (tangent, bitangent) = self.axis.any_orthonormal_pair();
@@ -246,7 +250,8 @@ impl InitModifier for InitPositionCircleModifier {
 ///
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitPositionSphereModifier {
     /// The sphere center, relative to the emitter position.
     pub center: Vec3,
@@ -258,7 +263,7 @@ pub struct InitPositionSphereModifier {
 
 impl_mod_init!(InitPositionSphereModifier, &[Attribute::POSITION]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitPositionSphereModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         let radius_code = match self.dimension {
@@ -321,7 +326,8 @@ impl InitModifier for InitPositionSphereModifier {
 ///
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitPositionCone3dModifier {
     /// The cone height along its axis, between the base and top radii.
     pub height: f32,
@@ -336,7 +342,7 @@ pub struct InitPositionCone3dModifier {
 
 impl_mod_init!(InitPositionCone3dModifier, &[Attribute::POSITION]);
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitPositionCone3dModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         context.init_extra += &format!(
@@ -389,7 +395,8 @@ impl InitModifier for InitPositionCone3dModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitVelocityCircleModifier {
     /// The circle center, relative to the emitter position.
     pub center: Vec3,
@@ -405,7 +412,7 @@ impl_mod_init!(
     &[Attribute::POSITION, Attribute::VELOCITY]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitVelocityCircleModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         context.init_extra += &format!(
@@ -437,7 +444,8 @@ impl InitModifier for InitVelocityCircleModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitVelocitySphereModifier {
     /// Center of the sphere. The radial direction of the velocity is the
     /// direction from the sphere center to the particle position.
@@ -451,7 +459,7 @@ impl_mod_init!(
     &[Attribute::POSITION, Attribute::VELOCITY]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitVelocitySphereModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         context.init_code += &format!(
@@ -473,7 +481,8 @@ impl InitModifier for InitVelocitySphereModifier {
 /// This modifier requires the following particle attributes:
 /// - [`Attribute::POSITION`]
 /// - [`Attribute::VELOCITY`]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitVelocityTangentModifier {
     /// Origin from which to derive the radial axis based on the particle
     /// position.
@@ -490,7 +499,7 @@ impl_mod_init!(
     &[Attribute::POSITION, Attribute::VELOCITY]
 );
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitVelocityTangentModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         context.init_extra += &format!(
@@ -526,7 +535,8 @@ impl InitModifier for InitVelocityTangentModifier {
 /// - [`Attribute::SIZE`] or [`Attribute::SIZE2`]
 ///
 /// [`SizeOverLifetimeModifier`]: crate::SizeOverLifetimeModifier
-#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InitSizeModifier {
     /// The size to initialize each particle with.
     ///
@@ -536,7 +546,7 @@ pub struct InitSizeModifier {
     pub size: DimValue,
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl Modifier for InitSizeModifier {
     fn context(&self) -> ModifierContext {
         ModifierContext::Init
@@ -563,7 +573,7 @@ impl Modifier for InitSizeModifier {
     }
 }
 
-#[typetag::serde]
+#[cfg_attr(feature = "serde", typetag::serde)]
 impl InitModifier for InitSizeModifier {
     fn apply(&self, context: &mut InitContext) -> Result<(), ExprError> {
         context.init_code += &format!(
