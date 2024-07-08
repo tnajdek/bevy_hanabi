@@ -55,8 +55,7 @@ naga = "0.20"
 naga_oil = { version = "0.14", default-features = false, features = ["test_shader"] }
 
 [dependencies.bevy]
-#version = "0.14.0-rc.3"
-git = "https://github.com/bevyengine/bevy.git"
+version = "0.14.0"
 default-features = false
 features = [ "bevy_core_pipeline", "bevy_render", "bevy_asset", "x11" ]
 
